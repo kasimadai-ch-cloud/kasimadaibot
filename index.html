@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>学校Q&Aチャットボット（モード切替対応）</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>学校Q&Aチャットボット</h1>
+    <div class="modes">
+      <button class="mode-btn" data-mode="culture">文化祭モード</button>
+      <button class="mode-btn" data-mode="career">進路モード</button>
+      <button class="mode-btn" data-mode="school">学校生活モード</button>
+    </div>
+  </header>
+
+  <main class="chat">
+    <div id="chatlog" class="chatlog" aria-live="polite"></div>
+    <form id="chatForm" class="chat-input" autocomplete="off">
+      <input id="userInput" type="text" placeholder="質問を入力してください（例：模擬店の開始時間は？）" required />
+      <button type="submit">送信</button>
+    </form>
+  </main>
+
+  <footer class="foot">
+    <details>
+      <summary>使い方・編集方法</summary>
+      <p>上のボタンでモードを切り替えます。回答データは <code>/data/*.json</code> を編集してください。</p>
+    </details>
+  </footer>
+
+  <script src="./script.js"></script>
+</body>
+</html>
