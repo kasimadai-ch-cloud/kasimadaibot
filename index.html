@@ -3,8 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>学校Q&Aチャットボット（モード切替対応）</title>
+  <title>学校Q&Aチャットボット（モード切替＋一覧表示＋おすすめ）</title>
   <link rel="stylesheet" href="./styles.css" />
+  <style>
+    /* 既存CSSで足りない場合の軽い上書き */
+    .recbar { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 12px; }
+    .recbar .rec-btn {
+      padding:6px 10px; border:1px solid #cbd5e1; border-radius:999px; background:#fff; cursor:pointer;
+    }
+    .recbar .rec-label { font-size:12px; color:#6b7280; display:flex; align-items:center; gap:6px; }
+    .select-inline { display:flex; align-items:center; gap:6px; }
+  </style>
 </head>
 <body>
   <header class="app-header">
@@ -17,27 +26,31 @@
   </header>
 
   <main class="chat">
-    <div id="chatlog" class="chatlog" aria-live="polite"></div>
-<form id="chatForm" class="chat-input" autocomplete="off">
-  <input id="userInput" type="text" placeholder="質問を入力してください（例：模擬店の開始時間は？）" required />
-  <label class="small" style="display:flex; align-items:center; gap:6px;">
-    表示件数
-    <select id="resultCount">
-      <option value="3">3</option>
-      <option value="5" selected>5</option>
-      <option value="10">10</option>
-      <option value="20">20</option>
-    </select>
-  </label>
-  <button type="submit">送信</button>
-</form>
+    <!-- おすすめ質問エリア -->
+    <div id="recArea" class="recbar" aria-live="polite"></div>
 
+    <div id="chatlog" class="chatlog" aria-live="polite"></div>
+
+    <form id="chatForm" class="chat-input" autocomplete="off">
+      <input id="userInput" type="text" placeholder="質問を入力してください（例：模擬店の開始時間は？）" required />
+      <label class="small select-inline">
+        表示件数
+        <select id="resultCount">
+          <option value="3">3</option>
+          <option value="5" selected>5</option>
+          <option value="10">10</option>
+          <option value="20">20</option>
+        </select>
+      </label>
+      <button type="submit">送信</button>
+    </form>
   </main>
 
   <footer class="foot">
     <details>
       <summary>使い方・編集方法</summary>
       <p>上のボタンでモードを切り替えます。回答データは <code>/data/*.json</code> を編集してください。</p>
+      <p>管理編集は <code>admin.html</code>（校内のみ）から行えます。</p>
     </details>
   </footer>
 
