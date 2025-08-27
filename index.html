@@ -18,10 +18,20 @@
 
   <main class="chat">
     <div id="chatlog" class="chatlog" aria-live="polite"></div>
-    <form id="chatForm" class="chat-input" autocomplete="off">
-      <input id="userInput" type="text" placeholder="質問を入力してください（例：模擬店の開始時間は？）" required />
-      <button type="submit">送信</button>
-    </form>
+<form id="chatForm" class="chat-input" autocomplete="off">
+  <input id="userInput" type="text" placeholder="質問を入力してください（例：模擬店の開始時間は？）" required />
+  <label class="small" style="display:flex; align-items:center; gap:6px;">
+    表示件数
+    <select id="resultCount">
+      <option value="3">3</option>
+      <option value="5" selected>5</option>
+      <option value="10">10</option>
+      <option value="20">20</option>
+    </select>
+  </label>
+  <button type="submit">送信</button>
+</form>
+
   </main>
 
   <footer class="foot">
