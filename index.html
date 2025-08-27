@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>学校Q&Aチャットボット（モード切替＋一覧表示＋おすすめ）</title>
+  <title>学校Q&Aチャットボット（一覧＋おすすめ＋もっと見る）</title>
   <link rel="stylesheet" href="./styles.css" />
   <style>
     /* 既存CSSで足りない場合の軽い上書き */
@@ -13,6 +13,12 @@
     }
     .recbar .rec-label { font-size:12px; color:#6b7280; display:flex; align-items:center; gap:6px; }
     .select-inline { display:flex; align-items:center; gap:6px; }
+    .more-wrap { display:flex; justify-content:center; margin:12px 0 4px; }
+    .more-btn {
+      padding:8px 14px; border-radius:10px; border:1px solid #111827; background:#111827; color:#fff; cursor:pointer;
+    }
+    .more-btn[disabled] { opacity:0.5; cursor:not-allowed; }
+    .badge { display:inline-block; padding:2px 6px; border-radius:999px; background:#eef2ff; font-size:12px; }
   </style>
 </head>
 <body>
@@ -26,11 +32,7 @@
   </header>
 
   <main class="chat">
-    <!-- おすすめ質問エリア -->
-    <div id="recArea" class="recbar" aria-live="polite"></div>
-
-    <div id="chatlog" class="chatlog" aria-live="polite"></div>
-
+    <!-- 検索フォーム -->
     <form id="chatForm" class="chat-input" autocomplete="off">
       <input id="userInput" type="text" placeholder="質問を入力してください（例：模擬店の開始時間は？）" required />
       <label class="small select-inline">
@@ -44,12 +46,27 @@
       </label>
       <button type="submit">送信</button>
     </form>
+
+    <!-- おすすめ質問（入力欄の下） -->
+    <div id="recArea" class="recbar" aria-live="polite"></div>
+
+    <!-- 結果スクロール用アンカー -->
+    <div id="resultsAnchor"></div>
+
+    <!-- 結果表示 -->
+    <div id="chatlog" class="chatlog" aria-live="polite"></div>
+
+    <!-- もっと見る -->
+    <div class="more-wrap">
+      <button id="moreBtn" class="more-btn" disabled>もっと見る（+5件）</button>
+    </div>
   </main>
 
   <footer class="foot">
     <details>
       <summary>使い方・編集方法</summary>
       <p>上のボタンでモードを切り替えます。回答データは <code>/data/*.json</code> を編集してください。</p>
+      <p>おすすめ質問は <code>/data/recommended.json</code>（モード別）で管理できます。</p>
       <p>管理編集は <code>admin.html</code>（校内のみ）から行えます。</p>
     </details>
   </footer>
