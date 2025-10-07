@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>鹿島台商業高校Q&Aチャットボット</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <style>
+    /* 既存CSSがあればそのままでOK。足りない最小分を補います。 */
+    .app-header { padding: 12px 16px; }
+    .modes { display: flex; gap: 8px; flex-wrap: wrap; }
+    .mode-btn { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 999px; background: #fff; cursor: pointer; }
+    .mode-btn.active { background: #111827; color: #fff; border-color: #111827; }
+    .chat { max-width: 900px; margin: 0 auto; padding: 12px 16px; }
+    .chat-input { display: flex; gap: 8px; align-items: center; margin: 12px 0; flex-wrap: wrap; }
+    .chat-input input[type="text"] { flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; }
+    .chat-input button { padding: 10px 14px; border-radius: 10px; border: 1px solid #111827; background:#111827; color:#fff; cursor:pointer; }
+    .select-inline { display: flex; align-items: center; gap: 6px; }
+    .recbar { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 12px; }
+    .recbar .rec-btn { padding:6px 10px; border:1px solid #cbd5e1; border-radius:999px; background:#fff; cursor:pointer; }
+    .recbar .rec-label { font-size:12px; color:#6b7280; display:flex; align-items:center; gap:6px; }
+    .chatlog { display:flex; flex-direction:column; gap:10px; }
+    .msg { display:flex; gap:10px; }
+    .msg .b { width:28px; height:28px; border-radius:999px; background:#111827; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold; }
+    .msg.user .b { background:#2563eb; }
+    .bubble { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:10px; max-width:100%; }
+    .small { font-size:12px; color:#6b7280; }
+    .badge { display:inline-block; padding:2px 6px; border-radius:999px; background:#eef2ff; font-size:12px; }
+    .more-wrap { display:flex; justify-content:center; margin:12px 0 4px; }
+    .more-btn { padding:8px 14px; border-radius:10px; border:1px solid #111827; background:#111827; color:#fff; cursor:pointer; }
+    .more-btn[disabled] { opacity:.5; cursor:not-allowed; }
+    figure { margin: 8px 0; }
+    img { max-width: 100%; height: auto; }
+    .foot { max-width: 900px; margin: 0 auto 40px; padding: 0 16px; }
+    mark { background: #fffb00; padding: 0 2px; border-radius: 2px; }
+    .qa-item { border:1px solid #e5e7eb; border-radius:10px; padding:8px 10px; background:#fff; }
+.qa-item + .qa-item { margin-top:10px; }
+.qa-summary { display:flex; align-items:center; gap:8px; cursor:pointer; }
+.qa-summary::-webkit-details-marker { display:none; } /* Safari等での▲マーカー非表示（好み） */
+.qa-summary .qtext { font-weight:600; }
+.qa-answer { margin-top:8px; }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <h1 id="appTitle">鹿島台商業校Q&Aチャットボット</h1>
+    <p>↓最初にモードを選択↓</p>
+    <div id="modeBar" class="modes"><!-- manifest.json から自動生成 --></div>
+  </header>
+
+  <main class="chat">
+    <!-- 検索フォーム -->
+    <form id="chatForm" class="chat-input" autocomplete="off">
+      <input id="userInput" type="text" placeholder="質問を入力してください" required />
+      <label class="small select-inline">
+        表示件数
+        <select id="resultCount">
+          <option value="1" selected>1</option>
+          <option value="3">3</option>
+          <option value="5">5</option>
+          <option value="10">10</option>
+        </select>
+      </label>
+      <button type="submit">送信</button>
+    </form>
+
+    <!-- おすすめ（入力欄の下） -->
+    <div id="recArea" class="recbar" aria-live="polite"></div>
+
+    <!-- 結果スクロール用アンカー -->
+    <div id="resultsAnchor"></div>
+
+    <!-- 結果表示 -->
+    <div id="chatlog" class="chatlog" aria-live="polite"></div>
+
+    <!-- もっと見る -->
+    <div class="more-wrap">
+      <button id="moreBtn" class="more-btn" disabled>もっと見る（+5件）</button>
+    </div>
+  </main>
+
+  <!--
+  <footer class="foot">
+    <details>
+      <summary>使い方・編集方法</summary>
+      <p>モード定義は <code>/data/manifest.json</code>。FAQは同JSON内の <code>file</code> 参照先に保存します。</p>
+      <p>おすすめ質問：<code>/data/recommended.json</code>（配列 or オブジェクト）</p>
+      <p>プレースホルダー：<code>/data/ui_texts.json</code>（<code>placeholders</code> キー）</p>
+      <p>管理編集は <code><a href="./admin.html">admin.html</a></code>（校内のみ）から行えます。</p>
+    </details>
+  </footer>
+-->
+  <script src="script.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "faqs": [
+    { "key": "faq_career",   "label": "進路",     "file": "data/faq_career.json" },
+    { "key": "faq_culture",     "label": "文化祭",     "file": "data/faq_culture.json" },
+    { "key": "faq_school", "label": "学校生活", "file": "data/faq_school.json" }
+  ],
+  "other": [
+    { "key": "recommended",   "label": "おすすめ", "file": "data/recommended.json" }
+  ]
+}
