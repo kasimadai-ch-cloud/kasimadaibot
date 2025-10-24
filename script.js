@@ -453,9 +453,9 @@ function onClickMore(){
   const sel = getResultSelect();
   const cur = readResultLimit();
   if(sel){
-    sel.value = String(cur + 5); // UIも更新
+    sel.value = String(cur + 10); // UIも更新
   }
-  RESULT_LIMIT_CURRENT = cur + 5;
+  RESULT_LIMIT_CURRENT = cur + 10;
   renderResultsList(LAST_QUERY, LAST_MATCHES);
 }
 
