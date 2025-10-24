@@ -486,14 +486,20 @@ if (RESULT_SELECT) RESULT_SELECT.addEventListener('change', ()=>{
     }
   });
 if (MORE_BTN) MORE_BTN.addEventListener('click', ()=>{
-  if(!LAST_MATCHES) return;
-   const sel = getResultSelect();
-   const cur = readResultLimit();
-   if (sel) sel.value = String(cur + PAGE_STEP);
-   RESULT_LIMIT_CURRENT = cur + PAGE_STEP;
-   const html = buildResultsHtml(LAST_QUERY, LAST_MATCHES);
-   updateLastAnswer(html);
-   updateMoreBtnState();
+  if (!LAST_MATCHES) return;
+
+  const sel = getResultSelect();
+  const cur = readResultLimit();
+
+  // 10件ずつ増やす
+  const next = Math.min(cur + PAGE_STEP, LAST_MATCHES.length);
+  RESULT_LIMIT_CURRENT = next;
+
+  if (sel) sel.value = String(next);
+
+  const html = buildResultsHtml(LAST_QUERY, LAST_MATCHES);
+  updateLastAnswer(html);
+  updateMoreBtnState();
 });
 if (FORM) FORM.addEventListener('submit', (e)=>{
   e.preventDefault();
