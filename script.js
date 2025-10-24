@@ -14,7 +14,7 @@ let MANIFEST = null;
 let MODE_KEY = null, MODE_LABEL = '', FAQ_FILE = '';
 let FAQS = [];
 let RESULT_LIMIT_BASE = 1, RESULT_LIMIT_CURRENT = 1;
-const PAGE_STEP = 5;
+const PAGE_STEP = 10;
 let LAST_QUERY = null, LAST_MATCHES = null;
 let RECOMMENDED = null;
 let UI_TEXTS = null;
