@@ -490,17 +490,26 @@ if (MORE_BTN) MORE_BTN.addEventListener('click', ()=>{
 
   const sel = getResultSelect();
   const cur = readResultLimit();
+  const PAGE_STEP = 10; // ← ここを固定で10件ずつ増やす
 
-  // 10件ずつ増やす
+  // 次に表示する件数を計算（上限は全件）
   const next = Math.min(cur + PAGE_STEP, LAST_MATCHES.length);
   RESULT_LIMIT_CURRENT = next;
 
+  // セレクトの表示値も合わせる
   if (sel) sel.value = String(next);
 
+  // HTML更新
   const html = buildResultsHtml(LAST_QUERY, LAST_MATCHES);
   updateLastAnswer(html);
   updateMoreBtnState();
+
+  // ボタンの表示文も更新（任意）
+  MORE_BTN.textContent = next >= LAST_MATCHES.length
+    ? 'すべて表示済み'
+    : `もっと見る（+${PAGE_STEP}件）`;
 });
+
 if (FORM) FORM.addEventListener('submit', (e)=>{
   e.preventDefault();
   const text=INPUT.value.trim(); if(!text) return;
