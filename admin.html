@@ -1,0 +1,1054 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>管理ツール（FAQ編集＋おすすめ＋UIテキスト）</title>
+<style>
+  :root{--bd:#cbd5e1;--muted:#6b7280;--ring:#111827;--bg:#fff;--ok:#16a34a;--warn:#d97706}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",sans-serif;margin:16px;background:#fafafa}
+  h1{font-size:18px;margin:0 0 12px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  select,input,textarea,button{padding:8px;border:1px solid var(--bd);border-radius:8px;background:#fff}
+  button{cursor:pointer}
+  table{width:100%;border-collapse:collapse;margin-top:8px;background:#fff}
+  th,td{border:1px solid #e5e7eb;padding:6px;vertical-align:top}
+  small{color:var(--muted)}
+  fieldset{border:1px solid #e5e7eb;border-radius:8px;margin:8px 0;padding:8px;background:#fff}
+  legend{padding:0 6px}
+  .tabs{display:flex;gap:8px;margin:12px 0}
+  .tabbtn{padding:8px 12px;border-radius:8px;border:1px solid var(--bd);background:#fff;cursor:pointer}
+  .tabbtn.active{background:var(--ring);color:#fff;border-color:var(--ring)}
+  .tab{display:none}
+  .tab.active{display:block}
+  .badge{display:inline-block;padding:2px 6px;border-radius:999px;background:#eef2ff}
+  .hidden{display:none}
+  hr{border:none;border-top:1px solid #e5e7eb;margin:12px 0}
+  .status{display:flex;align-items:center;gap:8px;margin:8px 0}
+  .dot{width:10px;height:10px;border-radius:999px;background:#9ca3af}
+  .dot.ok{background:var(--ok)}
+  .dot.warn{background:var(--warn)}
+  .toast{position:fixed;right:12px;bottom:12px;background:#111827;color:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.2);opacity:0;transform:translateY(8px);transition:.25s}
+  .toast.show{opacity:1;transform:translateY(0)}
+  .spacer{flex:1}
+</style>
+</head>
+<body>
+<h1>管理ツール（FAQ編集＋おすすめ＋UIテキスト）<a href="./index.html">もどる</a></h1>
+
+<!-- ============ ゲート（タブ内セッションで記憶） ============ -->
+<div id="gate">
+  <div class="row">
+    <input id="pw" type="password" placeholder="パスワード" />
+    <button id="enter">入室</button>
+    <small>※校内向け簡易ロック。外部公開時はIP制限/Basic認証を推奨。</small>
+  </div>
+</div>
+
+<!-- ============ アプリ本体 ============ -->
+<div id="app" style="display:none">
+  <!-- ヘッダー行（セッション情報） -->
+  <div class="row">
+    <div class="status">
+      <span class="dot ok" id="authDot"></span>
+      <small id="authInfo">認証済み（このタブを閉じるまで有効）</small>
+    </div>
+    <div class="spacer"></div>
+    <button id="logout">このタブの認証をクリア</button>
+  </div>
+
+  <!-- タブ -->
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="faq">FAQ編集</button>
+    <button class="tabbtn" data-tab="rec">おすすめ管理</button>
+    <button class="tabbtn" data-tab="ui">UIテキスト</button>
+  </div>
+
+  <!-- ========== FAQ編集タブ ========== -->
+  <div id="tab-faq" class="tab active">
+    <div class="row">
+      <label>モード：
+        <select id="mode"><!-- manifest.json から自動生成 --></select>
+      </label>
+      <button id="load">読込</button>
+      <button id="download">JSONダウンロード</button>
+      <button id="saveServer" title="サーバへ保存（ページは再読み込みしません）">サーバ保存</button>
+      <label>保存モード
+        <select id="saveMode">
+          <option value="append" selected>追加（安全）</option>
+          <option value="overwrite">上書き（要注意）</option>
+        </select>
+      </label>
+      <label>インポート：<input id="import" type="file" accept="application/json" /></label>
+      <button id="csvDownload">CSVダウンロード</button>
+    <select id="csvImportMode" title="CSVインポートの挙動">
+  <option value="replace">置換（丸ごと入れ替え）</option>
+  <option value="append">追加（そのまま後ろに）</option>
+  <option value="merge_overwrite" selected>マージ（重複Qは上書き）</option>
+  <option value="merge_skip">マージ（重複Qはスキップ）</option>
+</select>
+<label>CSVインポート：<input id="csvImport" type="file" accept=".csv,text/csv" /></label>
+
+      <small id="faqFilePath" class="row"></small>
+    </div>
+
+    <div class="row">
+      <small id="saveStatus">未保存</small>
+      <div class="spacer"></div>
+      <small>保存後にページ再読込はしません。必要に応じて「読込」で最新を取り直せます。</small>
+    </div>
+
+    <table id="list">
+      <thead><tr><th>#</th><th>Q</th><th>回答タイプ</th><th>tags</th><th>URL</th><th>編集</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <fieldset>
+      <legend>新規 / 編集</legend>
+      <div class="row">
+        <input id="q" style="flex:1" placeholder="質問(Q)" />
+      </div>
+      <div class="row">
+        <label><input type="radio" name="type" value="text" checked /> テキスト</label>
+        <label><input type="radio" name="type" value="image" /> 画像</label>
+        <label><input type="radio" name="type" value="html" /> HTML</label>
+      </div>
+
+      <div id="textBox" class="row">
+        <textarea id="a" style="width:100%;height:100px" placeholder="回答(テキスト)"></textarea>
+      </div>
+
+      <div id="imageBox" class="row hidden">
+        <small>画像の配列を追加：（src, alt, caption）</small>
+        <div class="row" style="width:100%">
+          <input id="imgSrc" placeholder="src 例: assets/timetable_2025-10-01.png" style="flex:2" />
+          <input id="imgAlt" placeholder="alt" style="flex:1" />
+          <input id="imgCap" placeholder="caption" style="flex:1" />
+          <button id="addImg">画像を追加</button>
+        </div>
+        <table id="imgs"><thead><tr><th>#</th><th>src</th><th>alt</th><th>caption</th><th>削除</th></tr></thead><tbody></tbody></table>
+      </div>
+
+      <div id="htmlBox" class="row hidden">
+        <textarea id="a_html" style="width:100%;height:100px" placeholder="回答(HTML) ※自校作成のみ"></textarea>
+      </div>
+<div class="row">
+  <button id="genTags">タグ候補を生成</button>
+  <div id="tagSuggestions" class="row"></div>
+</div>
+      <div class="row">
+        <input id="tags" style="flex:1" placeholder="tags（カンマ区切り例：時間,スケジュール）" />
+      </div>
+
+      <!-- URL 共通欄 -->
+      <div class="row">
+        <input id="url" style="flex:1" placeholder="関連資料URLまたは共有パス（例：https://... または \\\\server\\share\\path）" />
+      </div>
+
+      <div class="row">
+        <button id="add">新規追加</button>
+        <button id="update" disabled>上書き保存</button>
+        <button id="reset">フォームリセット</button>
+      </div>
+      <small>※ ファイル更新は「サーバ保存」。再読み込みは不要です。</small>
+    </fieldset>
+  </div>
+
+  <!-- ========== おすすめ管理タブ ========== -->
+  <div id="tab-rec" class="tab">
+    <div class="row">
+      <button id="recLoad">recommended.json 読込</button>
+      <button id="recDownload">JSONダウンロード</button>
+      <button id="recSaveServer" title="サーバへ保存（ページは再読み込みしません）">サーバ保存</button>
+      <label>インポート：<input id="recImport" type="file" accept="application/json" /></label>
+      <small>※ 単一配列（全体共通）/ オブジェクト（キー別配列）どちらにも対応。</small>
+    </div>
+
+    <div class="row" id="recModeRow" style="display:none">
+      <label>編集対象キー：
+        <select id="recMode"></select>
+      </label>
+      <small>※ おすすめがオブジェクト形式のときのみ表示</small>
+    </div>
+
+    <table id="recTable">
+      <thead><tr><th>#</th><th>質問</th><th>操作</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <fieldset>
+      <legend>新規 / 編集（おすすめ）</legend>
+      <div class="row">
+        <input id="recText" style="flex:1" placeholder="おすすめに出す質問（例：文化祭は何時から？）" />
+      </div>
+      <div class="row">
+        <button id="recAdd">新規追加</button>
+        <button id="recUpdate" disabled>上書き保存</button>
+        <button id="recReset">フォームリセット</button>
+      </div>
+    </fieldset>
+  </div>
+
+  <!-- ========== UIテキストタブ ========== -->
+  <div id="tab-ui" class="tab">
+    <div class="row">
+      <button id="uiLoad">ui_texts.json 読込</button>
+      <button id="uiDownload">JSONダウンロード</button>
+      <button id="uiSaveServer" title="サーバへ保存（ページは再読み込みしません）">サーバ保存</button>
+      <label>インポート：<input id="uiImport" type="file" accept="application/json" /></label>
+    </div>
+
+    <table id="uiTable">
+      <thead><tr><th>#</th><th>モードキー</th><th>プレースホルダー例</th><th>操作</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <fieldset>
+      <legend>新規 / 編集（プレースホルダー）</legend>
+      <div class="row">
+        <input id="uiMode" placeholder="モードキー（例：faq_kyomu／任意）" />
+        <input id="uiPh" style="flex:1" placeholder="例：模擬店の開始時間は？" />
+      </div>
+      <div class="row">
+        <button id="uiAdd">新規追加</button>
+        <button id="uiUpdate" disabled>上書き保存</button>
+        <button id="uiReset">フォームリセット</button>
+      </div>
+      <small>構造例：{ "placeholders": { "faq_kyomu": "例…", "faq_somu": "例…" } }</small>
+    </fieldset>
+  </div>
+</div>
+
+<!-- トースト -->
+<div id="toast" class="toast" role="status" aria-live="polite">保存しました</div>
+
+<script>
+// ================= 設定 =================
+// ★ 必ず運用時に変更してください
+const ADMIN_PASS = "562664KChs";              // 入室用パス（タブ内セッションに保持）
+const SAVE_SECRET = "562664KChs";             // save_json.php と一致
+// APIエンドポイント（配置に合わせて）
+// 例：サブディレクトリ /qa-bot/ に置いているなら "/qa-bot/save_json.php"
+const SAVE_ENDPOINT = "./save_json.php";
+
+// JSONの定義パス
+const MANIFEST_PATH = "./data/manifest.json";
+const UI_TEXTS_PATH = "./data/ui_texts.json";
+
+// ================ 認証（タブ内セッション保持） ================
+const gate = document.getElementById('gate');
+const app  = document.getElementById('app');
+const authDot = document.getElementById('authDot');
+const authInfo = document.getElementById('authInfo');
+const toast = document.getElementById('toast');
+
+const SESSION_KEY = "qa_admin_authed_v1"; // タブ内のみ有効（sessionStorage）
+
+function showToast(msg="保存しました"){
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'), 1600);
+}
+
+function setAuthedUI(authed){
+  if (authed){
+    gate.style.display = 'none';
+    app.style.display = 'block';
+    authDot.classList.add('ok');
+    authInfo.textContent = "認証済み（このタブを閉じるまで有効）";
+  }else{
+    gate.style.display = 'block';
+    app.style.display = 'none';
+    authDot.classList.remove('ok');
+    authInfo.textContent = "未認証";
+  }
+}
+
+document.getElementById('enter').onclick = () => {
+  const val = (document.getElementById('pw').value || '').trim();
+  if (val === ADMIN_PASS) {
+    // タブ内セッションに記録
+    sessionStorage.setItem(SESSION_KEY, "1");
+    setAuthedUI(true);
+    initApp(); // 初回のみ初期化
+  } else {
+    alert('パスワードが違います');
+  }
+};
+
+document.getElementById('logout').onclick = ()=>{
+  sessionStorage.removeItem(SESSION_KEY);
+  setAuthedUI(false);
+};
+
+// 競合検知・ガード用
+let loadedMode = null;     // 「読込」時点のモード
+let loadedHash = null;     // 読み込んだデータのSHA256
+let dirty = false;         // 読込後に編集した？
+
+// 置き換え：secure context でなければ null を返す（=競合検知は無効化して動作続行）
+async function sha256(obj){
+  try{
+    if (!('crypto' in window) || !crypto.subtle) throw new Error('subtle-crypto-unavailable');
+    const txt = JSON.stringify(obj);
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(txt));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }catch(e){
+    console.warn('[hash] fallback (no SubtleCrypto):', e?.message || e);
+    return null; // ← フォールバック：ハッシュ無しで進む
+  }
+}
+
+
+
+
+
+// 簡易ストップワード
+const JP_STOP = new Set(["は","が","を","に","の","と","へ","で","も","や","から","まで","より","です","ます","する","した","ある","いる","こと","それ","これ","あれ","ため","よう","ので","など","にて"]);
+
+function extractTags(text){
+  const words = (text||'').match(/[\p{Script=Han}]{2,}|\p{Script=Katakana}{2,}|[A-Za-z]{2,}|\d+[A-Za-z%]*/gu) || [];
+  return words.filter(w=>!JP_STOP.has(w));
+}
+
+function suggestTags(q,a){
+  const all = [...extractTags(q), ...extractTags(a)];
+  const freq = {};
+  for(const w of all) freq[w] = (freq[w]||0)+1;
+  return Object.entries(freq)
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0,20)
+    .map(([w])=>w);
+}
+
+// ボタンイベント
+document.getElementById('genTags').onclick = ()=>{
+  const qv = qEl.value.trim();
+  const av = aEl.value.trim() || aHtmlEl.value.trim();
+  const sugg = suggestTags(qv,av);
+  const box = document.getElementById('tagSuggestions');
+  box.innerHTML = sugg.map(t=>`<button type="button" class="rec-btn" data-tag="${t}">${t}</button>`).join(' ');
+  box.querySelectorAll('button[data-tag]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const v = tagsEl.value.trim();
+      tagsEl.value = v ? (v + ',' + btn.dataset.tag) : btn.dataset.tag;
+    };
+  });
+};
+
+
+
+// 起動時：タブ内セッションを確認
+(function(){
+  const ok = sessionStorage.getItem(SESSION_KEY) === "1";
+  setAuthedUI(ok);
+  if (ok) initApp(); // すでに認証済みなら即初期化
+})();
+
+// ================ タブ切替 ================
+document.querySelectorAll('.tabbtn').forEach(btn=>{
+  btn.onclick = ()=>{
+    document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active', b===btn));
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  };
+});
+
+// ================ 共通ヘルパ ================
+const HTML_ENT = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, ch => HTML_ENT[ch]);
+}
+
+async function saveToServer(name, jsonObj, opts = {}){
+  const form = new URLSearchParams({
+    secret: SAVE_SECRET,
+    name: name,
+    body: JSON.stringify(jsonObj, null, 2)
+  });
+  if (opts.save_mode) form.set('save_mode', opts.save_mode); // 'append' | 'overwrite'
+  if (opts.if_match)  form.set('if_match',  opts.if_match);  // 読込時のハッシュ
+
+  const res = await fetch(SAVE_ENDPOINT, {
+    method: 'POST',
+    headers: {'Content-Type':'application/x-www-form-urlencoded'},
+    body: form
+  }).catch(e => ({ ok:false, status:0, text: async()=>String(e) }));
+
+  const text = await (res.text ? res.text() : Promise.resolve(''));
+  if(!res.ok){
+    if(res.status === 409){
+      alert('サーバ側が更新されています。「読込」で最新を取り直してから再保存してください。');
+    }else{
+      alert(`保存失敗: ${res.status}\n${text}`);
+    }
+    return false;
+  }
+  // JSONなら new_hash を拾う（旧"ok"文字列でもOK）
+  try {
+    const out = JSON.parse(text);
+    if (out.new_hash) loadedHash = out.new_hash;
+  } catch {}
+
+  setLastSavedNow();
+  showToast('保存しました');
+  return true;
+}
+
+
+function setLastSavedNow(){
+  const el = document.getElementById('saveStatus');
+  if (!el) return;
+  const d = new Date();
+  const t = d.toLocaleString();
+  el.textContent = `最終保存：${t}`;
+}
+
+/* ===== CSV <-> JSON ヘルパ ===== */
+
+// CSV 1行を安全に作る（Excel対応）
+function toCsvRow(arr){
+  return arr.map(v=>{
+    v = v==null ? '' : String(v);
+    if (/[",\n]/.test(v)) v = '"' + v.replace(/"/g,'""') + '"';
+    return v;
+  }).join(',');
+}
+
+// FAQ配列 -> CSV（見出し付き）
+// ヘッダ：q,type,a,a_html,tags,url,images
+// tags は Excel編集しやすいよう「|」区切りで出力（読込時は「|」と「,」両方OK）
+function itemsToCSV(items){
+  const header = ['q','type','a','a_html','tags','url','images'];
+  const rows = items.map(it=>{
+    const tags = (it.tags||[]).join('|');
+    const images = Array.isArray(it.images) ? JSON.stringify(it.images) : '';
+    return toCsvRow([it.q||'', it.type||'text', it.a||'', it.a_html||'', tags, it.url||'', images]);
+  });
+  return [toCsvRow(header), ...rows].join('\r\n');
+}
+
+// シンプルCSVパーサ（ダブルクォート/改行対応, CRLF/LF両対応）
+function parseCSV(text){
+  const rows=[]; let i=0, field='', inQ=false, row=[];
+  while(i < text.length){
+    const ch = text[i++];
+    if(inQ){
+      if(ch === '"'){
+        if(text[i] === '"'){ field += '"'; i++; }  // "" → "
+        else { inQ = false; }
+      }else{ field += ch; }
+    }else{
+      if(ch === '"'){ inQ = true; }
+      else if(ch === ','){ row.push(field); field=''; }
+      else if(ch === '\n' || ch === '\r'){
+        if(ch === '\r' && text[i] === '\n') i++; // CRLF
+        row.push(field); rows.push(row); field=''; row=[];
+      }else{ field += ch; }
+    }
+  }
+  row.push(field); rows.push(row);
+  return rows;
+}
+
+// CSV -> FAQ配列
+function csvToItems(csvText){
+  const rows = parseCSV(csvText).filter(r=>r.some(c=>(c||'').trim()!==''));
+  if (rows.length === 0) return [];
+  const header = rows.shift().map(h=>h.trim().toLowerCase());
+  const col = (name)=> header.indexOf(name);
+
+  const idx = {
+    q: col('q'), type: col('type'), a: col('a'), a_html: col('a_html'),
+    tags: col('tags'), url: col('url'), images: col('images')
+  };
+  const out = [];
+
+  for(const r of rows){
+    const obj = {};
+    obj.q = (idx.q>=0 ? r[idx.q] : '') || '';
+    obj.type = ((idx.type>=0 ? r[idx.type] : 'text') || 'text').trim();
+    obj.a = (idx.a>=0 ? r[idx.a] : '') || '';
+    obj.a_html = (idx.a_html>=0 ? r[idx.a_html] : '') || '';
+    const tagsCell = (idx.tags>=0 ? r[idx.tags] : '') || '';
+    obj.tags = tagsCell ? tagsCell.split(/\s*\|\s*|,\s*/).filter(Boolean) : [];
+    obj.url = (idx.url>=0 ? r[idx.url] : '') || '';
+
+    // images 列に JSON 文字列があれば優先して imageタイプに
+    const imgCell = (idx.images>=0 ? r[idx.images] : '') || '';
+    if (imgCell.trim()){
+      try {
+        const arr = JSON.parse(imgCell);
+        if (Array.isArray(arr)){ obj.type='image'; obj.images=arr; obj.a=''; obj.a_html=''; }
+      } catch(e){}
+    }
+    if (obj.type==='html' && obj.a_html){ obj.a=''; } // 整合性
+    out.push(obj);
+  }
+  return out;
+}
+
+
+// ================ manifest 読込＆モード生成 ================
+let MANIFEST = null;
+const modeSel = document.getElementById('mode');
+const faqPathLabel = document.getElementById('faqFilePath');
+
+async function loadManifest(){
+  const res = await fetch(MANIFEST_PATH, { cache:'no-store' });
+  MANIFEST = await res.json();
+}
+function buildModeSelectFromManifest(){
+  modeSel.innerHTML = '';
+  (MANIFEST.faqs || []).forEach(f=>{
+    const opt = document.createElement('option');
+    opt.value = f.key;          // 例: "faq_kyomu"
+    opt.textContent = f.label;  // 例: "教務"
+    opt.dataset.file = f.file;  // 例: "data/faq_kyomu.json"
+    modeSel.appendChild(opt);
+  });
+  const opt = modeSel.options[modeSel.selectedIndex];
+  faqPathLabel.textContent = 'ファイル: ' + (opt?.dataset?.file || '');
+}
+modeSel.addEventListener('change', (e)=>{
+  // 編集中なら警告
+  if (dirty && !confirm('編集中の内容があります。モードを変えると破棄します。続けますか？')){
+    e.target.value = loadedMode ?? e.target.value;
+  }
+  const opt = modeSel.options[modeSel.selectedIndex];
+  faqPathLabel.textContent = 'ファイル: ' + (opt?.dataset?.file || '');
+
+  // 読込前は保存させない
+  document.getElementById('saveServer').disabled = true;
+  loadedMode = null;
+  loadedHash = null;
+  items = [];
+  renderList(); clearForm();
+  document.getElementById('saveStatus').textContent = '未保存';
+});
+
+
+// ================ FAQ 編集ロジック ================
+let items = [];
+let images = [];
+let editIndex = -1;
+
+const loadBtn = document.getElementById('load');
+const dlBtn = document.getElementById('download');
+const importInput = document.getElementById('import');
+const listBody = document.querySelector('#list tbody');
+
+const qEl = document.getElementById('q');
+const aEl = document.getElementById('a');
+const aHtmlEl = document.getElementById('a_html');
+const tagsEl = document.getElementById('tags');
+const urlEl = document.getElementById('url'); // URL欄
+
+const typeRadios = [...document.querySelectorAll('input[name="type"]')];
+const textBox = document.getElementById('textBox');
+const imageBox = document.getElementById('imageBox');
+const htmlBox = document.getElementById('htmlBox');
+
+const imgSrc = document.getElementById('imgSrc');
+const imgAlt = document.getElementById('imgAlt');
+const imgCap = document.getElementById('imgCap');
+const addImgBtn = document.getElementById('addImg');
+const imgsBody = document.querySelector('#imgs tbody');
+
+const addBtn = document.getElementById('add');
+const updBtn = document.getElementById('update');
+const resetBtn = document.getElementById('reset');
+const saveServerBtn = document.getElementById('saveServer');
+
+function switchType(){
+  const t = typeRadios.find(r=>r.checked).value;
+  textBox.classList.toggle('hidden', t!=='text');
+  imageBox.classList.toggle('hidden', t!=='image');
+  htmlBox.classList.toggle('hidden', t!=='html');
+}
+typeRadios.forEach(r=>r.onchange=switchType);
+
+function renderImgs(){
+  imgsBody.innerHTML = '';
+  images.forEach((img,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i}</td><td>${escapeHtml(img.src||'')}</td><td>${escapeHtml(img.alt||'')}</td><td>${escapeHtml(img.caption||'')}</td>
+      <td><button data-rm="${i}">削除</button></td>`;
+    imgsBody.appendChild(tr);
+  });
+  imgsBody.querySelectorAll('button[data-rm]').forEach(b=>b.onclick=()=>{images.splice(+b.dataset.rm,1);renderImgs();});
+}
+addImgBtn.onclick = ()=>{
+  if(!imgSrc.value.trim()){ alert('src必須'); return; }
+  images.push({src:imgSrc.value.trim(), alt:imgAlt.value.trim(), caption:imgCap.value.trim()});
+  imgSrc.value = imgAlt.value = imgCap.value = '';
+  renderImgs();
+};
+
+function renderList(){
+  listBody.innerHTML = '';
+  items.forEach((it, i) => {
+    const tr = document.createElement('tr');
+    const type = it.type || 'text';
+    const tags = (it.tags||[]).join(', ');
+    const urlDisp = escapeHtml(it.url || '');
+    tr.innerHTML = `<td>${i}</td><td>${escapeHtml(it.q||'')}</td><td>${type}</td><td>${escapeHtml(tags)}</td><td>${urlDisp}</td>
+      <td><button data-edit="${i}">編集</button> <button data-del="${i}">削除</button></td>`;
+    listBody.appendChild(tr);
+  });
+  listBody.querySelectorAll('button[data-edit]').forEach(b=>b.onclick=()=>loadForm(+b.dataset.edit));
+  listBody.querySelectorAll('button[data-del]').forEach(b=>b.onclick=()=>{ if(confirm('削除しますか？')){ items.splice(+b.dataset.del,1); renderList(); clearForm(); } });
+}
+
+function loadForm(i){
+  const it = items[i];
+  editIndex = i;
+  qEl.value = it.q||'';
+  tagsEl.value = (it.tags||[]).join(',');
+  urlEl.value = it.url || '';
+  const t = it.type||'text';
+  typeRadios.find(r=>r.value===t).checked = true;
+  aEl.value = it.a||'';
+  aHtmlEl.value = it.a_html||'';
+  images = Array.isArray(it.images)? JSON.parse(JSON.stringify(it.images)) : [];
+  renderImgs(); switchType();
+  updBtn.disabled = false; addBtn.disabled = true;
+}
+
+function clearForm(){
+  editIndex = -1;
+  qEl.value = aEl.value = aHtmlEl.value = tagsEl.value = urlEl.value = '';
+  images = []; renderImgs();
+  typeRadios.find(r=>r.value==='text').checked = true;
+  switchType();
+  updBtn.disabled = true; addBtn.disabled = false;
+}
+
+function collectFromForm(){
+  const t = typeRadios.find(r=>r.checked).value;
+  const obj = { 
+    q: qEl.value.trim(),
+    tags: tagsEl.value.split(',').map(s=>s.trim()).filter(Boolean),
+    url: (urlEl.value || '').trim()
+  };
+  if(t==='text'){ obj.a = aEl.value.trim(); }
+  if(t==='image'){ obj.type='image'; obj.images = images.slice(); obj.a=''; }
+  if(t==='html'){ obj.type='html'; obj.a_html = aHtmlEl.value; obj.a=''; }
+  return obj;
+}
+
+addBtn.onclick = ()=>{
+  const obj = collectFromForm();
+  if(!obj.q) return alert('Qは必須です');
+  if((obj.type||'text')==='text' && !obj.a) return alert('テキスト回答が空です');
+  if(obj.type==='image' && (!obj.images||obj.images.length===0)) return alert('画像を1件以上追加してください');
+  items.push(obj); renderList(); clearForm();
+  setUnsaved();
+};
+
+updBtn.onclick = ()=>{
+  if(editIndex<0) return;
+  const obj = collectFromForm();
+  if(!obj.q) return alert('Qは必須です');
+  items[editIndex] = obj; renderList(); clearForm();
+  setUnsaved();
+};
+
+function setUnsaved(){
+  const el = document.getElementById('saveStatus');
+  if (el) el.textContent = '未保存（変更あり）';
+  dirty = true;
+}
+
+
+loadBtn.onclick = async ()=>{
+  const opt = modeSel.options[modeSel.selectedIndex];
+  const url = './' + (opt.dataset.file || '');
+  if(!url) return alert('manifestのfileが未設定です');
+
+  document.getElementById('saveStatus').textContent = '読込中…';
+  const res = await fetch(url, { cache:'no-store' });
+  if (!res.ok){ alert('読込失敗'); return; }
+
+  items = await res.json();
+  renderList(); clearForm();
+
+  // ★ ガード用ステート更新
+  loadedMode = modeSel.value;
+  loadedHash = await sha256(items);
+  dirty = false;
+  document.getElementById('saveServer').disabled = false;
+  setLastSavedNow();
+ const ss = document.getElementById('saveStatus');
+ if (ss) ss.textContent += loadedHash ? `（ハッシュ: ${loadedHash.slice(0,8)}…）` : '（ハッシュ: なし）';
+};
+
+
+dlBtn.onclick = ()=>{
+  const key = modeSel.value || 'faq';
+  const out = JSON.stringify(items, null, 2);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([out],{type:'application/json'}));
+  a.download = `${key}.json`;
+  a.click(); URL.revokeObjectURL(a.href);
+};
+
+importInput.onchange = async ()=>{
+  const f = importInput.files[0]; if(!f) return;
+  try{ items = JSON.parse(await f.text()); renderList(); clearForm(); setUnsaved(); }
+  catch(e){ alert('JSONの読み込みに失敗しました'); }
+};
+
+saveServerBtn.onclick = async ()=>{
+  const key = modeSel.value;
+
+  if (!loadedMode){
+    alert('先に「読込」を実行してください。');
+    return;
+  }
+  if (key !== loadedMode){
+    alert(`保存先モードが読込時と違います。\n読込: ${loadedMode}\n保存: ${key}\n→ もう一度「読込」を実行してください。`);
+    return;
+  }
+
+  const saveModeEl = document.getElementById('saveMode');
+  const saveMode = saveModeEl ? saveModeEl.value : 'overwrite';
+
+  const ok = await saveToServer(key, items, {
+    save_mode: saveMode,
+    if_match: loadedHash || undefined  // ← null のとき送らない
+  });
+  if (ok){ dirty = false; }
+};
+
+
+// --- CSV ダウンロード ---
+document.getElementById('csvDownload').onclick = ()=>{
+  const csv = itemsToCSV(items);
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }); // BOM付きでExcel文字化け回避
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (modeSel.value || 'faq') + '.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+// Qから重複判定用キーを作る（全角空白/記号を潰して小文字に）
+function keyFromQ(q){
+  return String(q||'')
+    .toLowerCase()
+    .replace(/[？?！!。、「」、・…　\s]+/g,'')  // 記号・空白類を除去
+    .trim();
+}
+
+// --- CSV インポート ---
+document.getElementById('csvImport').onchange = async (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  try{
+    const text = await f.text();
+    const arr = csvToItems(text);
+    if (!arr.length) { alert('CSVに有効な行がありません'); return; }
+
+    const mode = document.getElementById('csvImportMode').value;
+
+    if (mode === 'replace'){
+      // 丸ごと置換
+      items = arr;
+
+    } else if (mode === 'append'){
+      // そのまま後ろへ追加
+      items = [...items, ...arr];
+
+    } else {
+      // マージ（Qキーで重複判定）
+      const map = new Map();
+      // まず既存を投入
+      for (const it of items){
+        map.set(keyFromQ(it.q), it);
+      }
+      // 次に新規を投入
+      for (const it of arr){
+        const k = keyFromQ(it.q);
+        if (mode === 'merge_overwrite'){
+          // 同一Qがあれば上書き
+          map.set(k, it);
+        } else if (mode === 'merge_skip'){
+          // 同一Qがあればスキップ、なければ追加
+          if(!map.has(k)) map.set(k, it);
+        }
+      }
+      items = Array.from(map.values());
+    }
+
+    renderList(); clearForm();
+    setUnsaved(); // 「未保存（変更あり）」表示
+
+  }catch(err){
+    alert('CSVの読み込みに失敗しました：' + (err?.message || err));
+  }finally{
+    e.target.value = ''; // 同じファイルを再選択できるように
+  }
+};
+
+
+// ================ おすすめ（配列 or オブジェクト） ================
+let RECS = []; let recEditIndex = -1; let recIsObject = false; let recCurrentKey = '';
+
+const recTableBody = document.querySelector('#recTable tbody');
+const recText = document.getElementById('recText');
+const recAdd = document.getElementById('recAdd');
+const recUpdate = document.getElementById('recUpdate');
+const recReset = document.getElementById('recReset');
+const recLoadBtn = document.getElementById('recLoad');
+const recDownloadBtn = document.getElementById('recDownload');
+const recImportInput = document.getElementById('recImport');
+const recSaveBtn = document.getElementById('recSaveServer');
+const recModeRow = document.getElementById('recModeRow');
+const recModeSel = document.getElementById('recMode');
+
+function getRecommendedFileFromManifest(){
+  const rec = (MANIFEST.other || []).find(x => x.key === 'recommended');
+  return rec ? ('./' + rec.file) : './data/recommended.json';
+}
+
+function ensureRecShape(){
+  recIsObject = (RECS && typeof RECS === 'object' && !Array.isArray(RECS));
+  if(recIsObject){
+    const keys = Object.keys(RECS);
+    if(keys.length===0){ RECS["default"] = []; }
+    recModeSel.innerHTML = '';
+    Object.keys(RECS).forEach(k=>{
+      const opt = document.createElement('option');
+      opt.value = k; opt.textContent = k;
+      recModeSel.appendChild(opt);
+    });
+    recCurrentKey = recModeSel.value || keys[0];
+    recModeRow.style.display = '';
+  }else{
+    recModeRow.style.display = 'none';
+    recCurrentKey = '';
+  }
+}
+function getRecListRef(){ return recIsObject ? (RECS[recCurrentKey] = RECS[recCurrentKey] || []) : RECS; }
+
+function renderRecTable(){
+  const list = getRecListRef();
+  recTableBody.innerHTML = '';
+  list.forEach((q,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i}</td><td>${escapeHtml(q)}</td>
+      <td>
+        <button data-up="${i}">↑</button>
+        <button data-down="${i}">↓</button>
+        <button data-edit="${i}">編集</button>
+        <button data-del="${i}">削除</button>
+      </td>`;
+    recTableBody.appendChild(tr);
+  });
+  recTableBody.querySelectorAll('button[data-edit]').forEach(b=>b.onclick=()=>{
+    const i = +b.dataset.edit; recEditIndex=i;
+    recText.value = getRecListRef()[i] || '';
+    recUpdate.disabled = false; recAdd.disabled = true;
+  });
+  recTableBody.querySelectorAll('button[data-del]').forEach(b=>b.onclick=()=>{
+    const i = +b.dataset.del;
+    if(!confirm('削除しますか？')) return;
+    getRecListRef().splice(i,1); renderRecTable(); clearRecForm(); setUnsavedRec();
+  });
+  recTableBody.querySelectorAll('button[data-up]').forEach(b=>b.onclick=()=>{
+    const i = +b.dataset.up; if(i<=0) return;
+    const arr = getRecListRef(); [arr[i-1], arr[i]] = [arr[i], arr[i-1]];
+    renderRecTable(); setUnsavedRec();
+  });
+  recTableBody.querySelectorAll('button[data-down]').forEach(b=>b.onclick=()=>{
+    const i = +b.dataset.down; const arr = getRecListRef();
+    if(i>=arr.length-1) return; [arr[i+1], arr[i]] = [arr[i], arr[i+1]];
+    renderRecTable(); setUnsavedRec();
+  });
+}
+function clearRecForm(){ recEditIndex=-1; recText.value=''; recUpdate.disabled=true; recAdd.disabled=false; }
+function setUnsavedRec(){ showToast('変更あり（保存してください）'); }
+
+recAdd.onclick = ()=>{
+  const t = recText.value.trim(); if(!t) return alert('質問を入力してください');
+  getRecListRef().push(t); renderRecTable(); clearRecForm(); setUnsavedRec();
+};
+recUpdate.onclick = ()=>{
+  if(recEditIndex<0) return;
+  const t = recText.value.trim(); if(!t) return alert('質問を入力してください');
+  getRecListRef()[recEditIndex] = t; renderRecTable(); clearRecForm(); setUnsavedRec();
+};
+recReset.onclick = clearRecForm;
+
+recLoadBtn.onclick = async ()=>{
+  try{
+    const res = await fetch(getRecommendedFileFromManifest(), { cache:'no-store' });
+    RECS = await res.json();
+  }catch(e){
+    alert('recommended.json を読み込めませんでした（新規作成します）');
+    RECS = [];
+  }
+  ensureRecShape();
+  renderRecTable(); clearRecForm();
+};
+recDownloadBtn.onclick = ()=>{
+  const out = JSON.stringify(RECS, null, 2);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([out],{type:'application/json'}));
+  a.download = 'recommended.json';
+  a.click(); URL.revokeObjectURL(a.href);
+};
+recImportInput.onchange = async ()=>{
+  const f = recImport.files[0]; if(!f) return;
+  try{ const obj = JSON.parse(await f.text()); RECS = obj; ensureRecShape(); renderRecTable(); clearRecForm(); setUnsavedRec(); }
+  catch(e){ alert('JSONの読み込みに失敗しました'); }
+};
+recModeSel.addEventListener('change', ()=>{
+  recCurrentKey = recModeSel.value;
+  renderRecTable(); clearRecForm();
+});
+recSaveBtn.onclick = async ()=>{
+  const ok = await saveToServer('recommended', RECS);
+  if (ok){ /* no reload */ }
+};
+
+// ================ UIテキスト（placeholders） ================
+let UI_TEXTS = { placeholders:{} };
+let uiEditKey = null;
+
+const uiTableBody = document.querySelector('#uiTable tbody');
+const uiMode = document.getElementById('uiMode');
+const uiPh = document.getElementById('uiPh');
+const uiAdd = document.getElementById('uiAdd');
+const uiUpdate = document.getElementById('uiUpdate');
+const uiReset = document.getElementById('uiReset');
+const uiLoad = document.getElementById('uiLoad');
+const uiDownload = document.getElementById('uiDownload');
+const uiImport = document.getElementById('uiImport');
+const uiSaveBtn = document.getElementById('uiSaveServer');
+
+function renderUiTable(){
+  uiTableBody.innerHTML = '';
+  const entries = Object.entries(UI_TEXTS.placeholders||{});
+  entries.forEach(([key, val], i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i}</td><td>${escapeHtml(key)}</td><td>${escapeHtml(val)}</td>
+      <td><button data-edit="${key}">編集</button> <button data-del="${key}">削除</button></td>`;
+    uiTableBody.appendChild(tr);
+  });
+  uiTableBody.querySelectorAll('button[data-edit]').forEach(b=>b.onclick=()=>{
+    const k = b.dataset.edit; uiEditKey = k;
+    uiMode.value = k; uiPh.value = UI_TEXTS.placeholders[k] || '';
+    uiUpdate.disabled=false; uiAdd.disabled=true;
+  });
+  uiTableBody.querySelectorAll('button[data-del]').forEach(b=>b.onclick=()=>{
+    const k = b.dataset.del;
+    if(confirm(`「${k}」を削除しますか？`)){
+      delete UI_TEXTS.placeholders[k];
+      renderUiTable(); clearUiForm(); showToast('変更あり（保存してください）');
+    }
+  });
+}
+function clearUiForm(){ uiEditKey=null; uiMode.value=''; uiPh.value=''; uiUpdate.disabled=true; uiAdd.disabled=false; }
+
+uiAdd.onclick = ()=>{
+  const k = uiMode.value.trim(); const v = uiPh.value.trim();
+  if(!k) return alert('モードキーは必須です');
+  if(!v) return alert('プレースホルダーを入力してください');
+  UI_TEXTS.placeholders = UI_TEXTS.placeholders||{};
+  if(UI_TEXTS.placeholders[k] && !confirm('既に存在します。上書きしますか？')) return;
+  UI_TEXTS.placeholders[k] = v; renderUiTable(); clearUiForm(); showToast('変更あり（保存してください）');
+};
+uiUpdate.onclick = ()=>{
+  if(uiEditKey===null) return;
+  const k = uiMode.value.trim(); const v = uiPh.value.trim();
+  if(!k||!v) return alert('モードキーとテキストは必須です');
+  if(k!==uiEditKey) delete UI_TEXTS.placeholders[uiEditKey];
+  UI_TEXTS.placeholders[k] = v; renderUiTable(); clearUiForm(); showToast('変更あり（保存してください）');
+};
+uiReset.onclick = clearUiForm;
+
+uiLoad.onclick = async ()=>{
+  try{
+    const res = await fetch(UI_TEXTS_PATH, { cache:'no-store' });
+    UI_TEXTS = await res.json();
+  }catch(e){
+    alert('ui_texts.json を読み込めませんでした（新規作成します）');
+    UI_TEXTS = { placeholders:{} };
+  }
+  renderUiTable(); clearUiForm();
+};
+uiDownload.onclick = ()=>{
+  const out = JSON.stringify(UI_TEXTS, null, 2);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([out],{type:'application/json'}));
+  a.download = 'ui_texts.json';
+  a.click(); URL.revokeObjectURL(a.href);
+};
+uiImport.onchange = async ()=>{
+  const f = uiImport.files[0]; if(!f) return;
+  try{ UI_TEXTS = JSON.parse(await f.text()); renderUiTable(); clearUiForm(); showToast('変更あり（保存してください）'); }
+  catch(e){ alert('JSONの読み込みに失敗しました'); }
+};
+uiSaveBtn.onclick = async ()=>{ await saveToServer('ui_texts', UI_TEXTS); };
+
+
+// 先頭BOMを除去
+function stripBOM(s){ return s.replace(/^\uFEFF/, ''); }
+
+async function loadManifest(){
+  // 相対でもサブディレクトリでも壊れない解決
+  const base = new URL('data/manifest.json', location.href).href;
+  const urls = [ base + (base.includes('?') ? '&' : '?') + 'v=' + Date.now(), base ]; // ?v=... がNGな環境のフォールバック
+
+  let lastErr;
+  for (const u of urls){
+    try{
+      const res = await fetch(u, { cache: 'no-store' });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      const raw = await res.text();
+
+      // ★ ここで BOM を剥がしてから parse
+      const clean = stripBOM(raw).trim();
+
+      // デバッグ：BOM検出ログ（任意）
+      if (raw.charCodeAt(0) === 0xFEFF) console.warn('[manifest] UTF-8 BOM detected and stripped');
+
+      MANIFEST = JSON.parse(clean);
+
+      // 形の軽い検証（任意）
+      if (!MANIFEST || !Array.isArray(MANIFEST.faqs)) {
+        throw new Error('manifest schema invalid (faqs が配列でない)');
+      }
+      return; // 成功
+    }catch(e){
+      console.error('[manifest] try failed for', u, e);
+      lastErr = e;
+    }
+  }
+  // すべて失敗
+  throw lastErr || new Error('manifest fetch/parse failed');
+}
+
+// ================ 初期化 ================
+async function initApp(){
+  try{
+    await loadManifest();
+    buildModeSelectFromManifest();
+    // FAQ一覧をとりあえず読み込み（最初のモード）
+    const opt = modeSel.options[modeSel.selectedIndex];
+    if (opt?.dataset?.file){
+      const res = await fetch('./' + opt.dataset.file, { cache:'no-store' });
+      items = await res.json();
+      renderList(); clearForm();
+      loadedMode = modeSel.value; loadedHash = await sha256(items);
+      document.getElementById('saveServer').disabled = false;
+      setLastSavedNow();
+    }
+  }catch(e){
+    alert('manifest.json の読み込みに失敗しました。/data/manifest.json を確認してください。');
+  }
+}
+</script>
+</body>
+</html>
