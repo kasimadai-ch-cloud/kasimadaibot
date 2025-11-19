@@ -359,5 +359,30 @@
         ],
         "url": "http://10.118.8.92/henkoukiroku/view.php",
         "a": "校内ネットワークでのみ閲覧できます。"
+    },
+    {
+        "q": "学校の公式ホームページは？",
+        "tags": [
+            "HP,webページ,公式,ホームページ"
+        ],
+        "url": "https://kasimadai-ch.myswan.ed.jp/",
+        "a": "学校の公式ホームページはこちらです。学校公式のページとして他にも　Instagram Facebookページもあります。"
+    },
+    {
+        "q": "学校の公式Instagramは？",
+        "tags": [
+            "HP,webページ,公式,インスタ,Instagram"
+        ],
+        "url": "https://www.instagram.com/kasimadai_ch_118/",
+        "a": "学校の公式Instagramはこちらです。他にも　学校公式のページ Facebookページもあります。"
+    },
+    {
+        "q": "学校の公式Facebookページは？",
+        "tags": [
+            "HP,webページ,公式,Facebook,フェイスブック"
+        ],
+        "url": "https://www.facebook.com/profile.php?id=61559625062254",
+        "a": "学校の公式Facebookページはこちらです。他にも　Instagram 学校公式のページ もあります。"
     }
+    
 ]
