@@ -25,7 +25,7 @@ function bail($code, $obj){
   exit;
 }
 
-$secret_expected = '562664KChs'; // ★ admin.html の SAVE_SECRET と一致させる
+$secret_expected = '1234567890'; // ★ admin.html の SAVE_SECRET と一致させる
 
 // --- ヘルスチェック（動作確認用） ---
 if (isset($_GET['health'])) { echo json_encode(["ok"=>true,"stage"=>"health"]); exit; }
@@ -165,3 +165,4 @@ if (file_put_contents($target, $json, LOCK_EX) === false){
 
 $newHash = hash('sha256', json_encode($next, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
 echo json_encode(["ok"=>true, "new_hash"=>$newHash], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+
