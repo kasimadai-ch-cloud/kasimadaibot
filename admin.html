@@ -502,9 +502,9 @@ function buildModeSelectFromManifest(){
   modeSel.innerHTML = '';
   (MANIFEST.faqs || []).forEach(f=>{
     const opt = document.createElement('option');
-    opt.value = f.key;          // 例: "faq_kyomu"
-    opt.textContent = f.label;  // 例: "教務"
-    opt.dataset.file = f.file;  // 例: "data/faq_kyomu.json"
+    opt.value = f.key;          // 例: "faq_school"
+    opt.textContent = f.label;  // 例: "学校生活"
+    opt.dataset.file = f.file;  // 例: "data/faq_school.json"
     modeSel.appendChild(opt);
   });
   const opt = modeSel.options[modeSel.selectedIndex];
@@ -1011,12 +1011,12 @@ async function loadManifest(){
       // ★ ここで BOM を剥がしてから parse
       const clean = stripBOM(raw).trim();
 
-      // デバッグ：BOM検出ログ（任意）
+      // デバッグ：BOM検出ログ
       if (raw.charCodeAt(0) === 0xFEFF) console.warn('[manifest] UTF-8 BOM detected and stripped');
 
       MANIFEST = JSON.parse(clean);
 
-      // 形の軽い検証（任意）
+      // 形の軽い検証
       if (!MANIFEST || !Array.isArray(MANIFEST.faqs)) {
         throw new Error('manifest schema invalid (faqs が配列でない)');
       }
@@ -1052,4 +1052,5 @@ async function initApp(){
 </script>
 </body>
 </html>
+
 
