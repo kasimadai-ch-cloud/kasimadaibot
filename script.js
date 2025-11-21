@@ -67,7 +67,7 @@ function addQAItem(question, answerHtml){
   LAST_QA_ANS = el.querySelector('.qa-answer');
   if (LAST_QA_ANS) bindCopyButtons(LAST_QA_ANS);
 
-  // 見やすくスクロール（任意）
+  // 見やすくスクロール
   el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -76,7 +76,6 @@ function summarize(html, max=120){
   const text = stripHtml(html).trim();
   return text.length>max ? text.slice(0,max) + '…' : text;
 }
-// summary内に: <span class="small text-gray-500">【要約】{summarize(answerHtml)}</span>
 
 
 function updateLastAnswer(html){
@@ -191,7 +190,7 @@ function highlight(text, re){
 
 
 
-// ===== 検索（改良版：日本語N-gram＋丁寧表現の除去） =====
+// ===== 検索：日本語N-gram＋丁寧表現の除去 =====
 let stopwords = new Set(['は','が','を','に','の','と','へ','で','も','や','から','まで','より','です','ます','する','した','ある','いる','こと','それ','これ','あれ','ため','よう','ので','など','？','。','、','!','！','？']);
 
 // 丁寧表現・冗長語などを削る
