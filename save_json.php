@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json; charset=UTF-8');
 
-// === 診断: 警告も例外化してキャッチ、致命的エラーもJSONで返す ===
+// === 診断: 警告も例外化してキャッチ、致命的エラーもJSONで返す ===　githubでは動かないので更新・保存はできません。
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 $__stage = 'start';
@@ -165,4 +165,5 @@ if (file_put_contents($target, $json, LOCK_EX) === false){
 
 $newHash = hash('sha256', json_encode($next, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
 echo json_encode(["ok"=>true, "new_hash"=>$newHash], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+
 
